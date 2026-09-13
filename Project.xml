@@ -227,8 +227,23 @@
 	
 	<assets path='art/iconOG.png' rename='icon.png' if="linux" />
 
-	<icon path="art/icon16.png" size='16'/>
-	<icon path="art/icon32.png" size='32'/>
-	<icon path="art/icon64.png" size='64'/>
-	<icon path="art/iconOG.png" />
+	<!--
+		iOS 构建需要 pslice-icon-dir 指向一个「图标文件夹」（Lime 新版强制要求）。
+		这里让 iOS 与 Android 共用同一张图标 art/iconOG.png，故指向已存在的 art 目录。
+		若构建仍报 You need to set "ios.pslice-icon-dir" to a folder with your icon，
+		说明 Lime 要求目录名以 .appiconset 结尾——此时请新建 art/mobile/PSlice.appiconset/ 目录，
+		并把 iconOG.png 复制进去，然后把下面的值改为 art/mobile/PSlice.appiconset
+	-->
+	<section if="mobile">
+		<config type="ios" pslice-icon-dir="art" />
+		<icon path="art/iconOG.png" />
+	</section>
+
+	<!-- Desktop icons (unchanged) -->
+	<section unless="mobile">
+		<icon path="art/icon16.png" size='16'/>
+		<icon path="art/icon32.png" size='32'/>
+		<icon path="art/icon64.png" size='64'/>
+		<icon path="art/iconOG.png" />
+	</section>
 </project>
