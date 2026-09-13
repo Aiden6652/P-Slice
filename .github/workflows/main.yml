@@ -13,10 +13,11 @@ jobs:
     strategy:
       matrix:
         include:
-          - name: Windows
-            os: ubuntu-latest
-            setupScript: sh ./setup/unix.sh
-            CACHE_NAME: P-Slice.0.6.3.desktop-cache
+          # 桌面构建已关闭，Windows 缓存不再需要
+          # - name: Windows
+          #   os: ubuntu-latest
+          #   setupScript: sh ./setup/unix.sh
+          #   CACHE_NAME: P-Slice.0.6.3.desktop-cache
 
           - name: Mobile
             os: macos-latest
@@ -27,50 +28,51 @@ jobs:
       os: ${{ matrix.os }}
       CACHE_NAME: ${{ matrix.CACHE_NAME }}
       setupScript: ${{ matrix.setupScript }}
-  BuildMacos:
-    name: macos
-    needs: BuildCaches
-    permissions: write-all
-    uses: ./.github/workflows/mac-universal.yml
-    with:
-      exportPath: macos
-      cachePath: P-Slice.0.6.3.build-macos
-      cacheLibrariesPath: P-Slice.0.6.3.desktop-cache
-      artifactName: P-Slice.0.6.3.macos
-      artifactPath: export/PE0.6.3/release/macos/bin/*
-  BuildDesktop:
-    name: ${{ matrix.name }}
-    needs: BuildCaches
-    permissions: write-all
-    strategy:
-      matrix:
-        include:
-          - name: Windows
-            os: windows-2022
-            buildArgs: windows
-            exportPath: windows
-            artifactName: P-Slice.0.6.3.windows
-            cacheLibrariesPath: P-Slice.0.6.3.desktop-cache
-            cachePath: P-Slice.0.6.3.build-windows
-            artifactPath: export\PE0.6.3\release\windows\bin\*
-          - name: Linux
-            os: ubuntu-22.04
-            buildArgs: linux
-            exportPath: linux
-            artifactName: P-Slice.0.6.3.linux
-            cachePath: P-Slice.0.6.3.build-linux
-            cacheLibrariesPath: P-Slice.0.6.3.desktop-cache
-            artifactPath: export/PE0.6.3/release/linux/bin/*
-    uses: ./.github/workflows/build.yml
-    with:
-      name: ${{ matrix.name }}
-      os: ${{ matrix.os }}
-      buildArgs: ${{ matrix.buildArgs }}
-      cacheLibrariesPath: ${{ matrix.cacheLibrariesPath }}
-      exportPath: ${{ matrix.exportPath }}
-      artifactName: ${{ matrix.artifactName }}
-      artifactPath: ${{ matrix.artifactPath }}
-      cachePath: ${{matrix.cachePath}}
+  # 桌面构建已关闭，只保留 iOS 与 Android
+  # BuildMacos:
+  #   name: macos
+  #   needs: BuildCaches
+  #   permissions: write-all
+  #   uses: ./.github/workflows/mac-universal.yml
+  #   with:
+  #     exportPath: macos
+  #     cachePath: P-Slice.0.6.3.build-macos
+  #     cacheLibrariesPath: P-Slice.0.6.3.desktop-cache
+  #     artifactName: P-Slice.0.6.3.macos
+  #     artifactPath: export/PE0.6.3/release/macos/bin/*
+  # BuildDesktop:
+  #   name: ${{ matrix.name }}
+  #   needs: BuildCaches
+  #   permissions: write-all
+  #   strategy:
+  #     matrix:
+  #       include:
+  #         - name: Windows
+  #           os: windows-2022
+  #           buildArgs: windows
+  #           exportPath: windows
+  #           artifactName: P-Slice.0.6.3.windows
+  #           cacheLibrariesPath: P-Slice.0.6.3.desktop-cache
+  #           cachePath: P-Slice.0.6.3.build-windows
+  #           artifactPath: export\PE0.6.3\release\windows\bin\*
+  #         - name: Linux
+  #           os: ubuntu-22.04
+  #           buildArgs: linux
+  #           exportPath: linux
+  #           artifactName: P-Slice.0.6.3.linux
+  #           cachePath: P-Slice.0.6.3.build-linux
+  #           cacheLibrariesPath: P-Slice.0.6.3.desktop-cache
+  #           artifactPath: export/PE0.6.3/release/linux/bin/*
+  #   uses: ./.github/workflows/build.yml
+  #   with:
+  #     name: ${{ matrix.name }}
+  #     os: ${{ matrix.os }}
+  #     buildArgs: ${{ matrix.buildArgs }}
+  #     cacheLibrariesPath: ${{ matrix.cacheLibrariesPath }}
+  #     exportPath: ${{ matrix.exportPath }}
+  #     artifactName: ${{ matrix.artifactName }}
+  #     artifactPath: ${{ matrix.artifactPath }}
+  #     cachePath: ${{matrix.cachePath}}
   BuildMobile:
     permissions: write-all
     name: ${{ matrix.name }}
