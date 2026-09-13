@@ -82,11 +82,15 @@ jobs:
 
       # --- iOS 专用：lime-pslice 仓库里没有 ndll/iPhone/ 预编译库，
       # --- 需要在构建前现场重建 iOS 原生库，否则 Xcode 链接阶段会失败。
+      # --- 重建需要 hxp / format 依赖（否则报 'hl.h' file not found）。
       - name: Rebuild Lime native libs for iOS
         if: inputs.exportPath == 'ios'
         run: |
           echo "===== lime 安装位置 ====="
           haxelib path lime || true
+          echo "===== 补装 iOS 重建所需依赖 ====="
+          haxelib install format --quiet || true
+          haxelib install hxp --quiet || true
           echo "===== 重建 iOS 原生库（可能需要较长时间）====="
           haxelib run lime rebuild ios -release -nocolor -nocffi
           echo "===== 重建完成，检查产物 ====="
