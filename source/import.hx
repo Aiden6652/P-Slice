@@ -95,5 +95,10 @@ import flixel.group.FlxGroup.FlxTypedGroup;
 import flixel.addons.transition.FlxTransitionableState;
 
 using StringTools;
+// Discord RPC 仅在桌面平台启用（Project.xml 中 discord_rpc 的 if="desktop"）。
+// 移动端（iOS/Android）未加载 hxdiscord_rpc，无条件 import 会导致：
+//   Module Discord does not define type DiscordClient
+#if discord_rpc
 import Discord.DiscordClient;
+#end
 #end
