@@ -80,22 +80,45 @@ jobs:
           haxelib run lime config JAVA_HOME $JAVA_HOME_17_arm64
           haxelib run lime config ANDROID_SETUP true
 
-      # --- iOS 专用：lime-pslice 仓库里没有 ndll/iPhone/ 预编译库，
-      # --- 需要在构建前现场重建 iOS 原生库，否则 Xcode 链接阶段会失败。
-      # --- 重建需要 hxp / format 依赖（否则报 'hl.h' file not found）。
+      # --- iOS 专用：lime-pslice 通过 haxelib git 安装时不会拉取 git submodule，
+      # --- 导致 lib/hashlink/src/hl.h 缺失（fatal error: 'hl.h' file not found）。
+      # --- 参照官方 ios.yml：clone 源码 + haxelib dev 指向它，让 submodule 就位。
+      - name: Prepare Lime source with submodules (iOS)
+        if: inputs.exportPath == 'ios'
+        run: |
+          echo "===== 补装依赖 ====="
+          haxelib install format --quiet || true
+          haxelib install hxp --quiet || true
+
+          echo "===== clone lime-pslice 源码 ====="
+          git clone --recursive --depth 1 \
+            https://github.com/Psych-Slice/lime-pslice.git lime-src
+          cd lime-src
+          echo "===== 切到 PE0.6.3 使用的提交 ====="
+          git fetch --depth 1 origin 305490d26798c54fad191e983c785015793ed299 || true
+          git checkout 305490d26798c54fad191e983c785015793ed299 || true
+          echo "===== 拉取 submodule（可能较慢）====="
+          git submodule update --init --recursive --depth 1 || true
+          cd ..
+
+          echo "===== 检查关键头文件 hl.h ====="
+          find lime-src -name "hl.h" -print 2>/dev/null || echo "未找到 hl.h"
+          echo "===== 检查 lib 目录 ====="
+          ls -la lime-src/lib/ 2>/dev/null || echo "lime-src/lib 不存在"
+          ls -la lime-src/project/lib/ 2>/dev/null || echo "lime-src/project/lib 不存在"
+
+          echo "===== 把 lime 指向源码目录 ====="
+          haxelib dev lime "$PWD/lime-src"
+          haxelib path lime || true
+
       - name: Rebuild Lime native libs for iOS
         if: inputs.exportPath == 'ios'
         run: |
-          echo "===== lime 安装位置 ====="
-          haxelib path lime || true
-          echo "===== 补装 iOS 重建所需依赖 ====="
-          haxelib install format --quiet || true
-          haxelib install hxp --quiet || true
           echo "===== 重建 iOS 原生库（可能需要较长时间）====="
-          haxelib run lime rebuild ios -release -nocolor -nocffi
+          haxelib run lime rebuild ios -release -nocolor -nocffi 2>&1 | tee rebuild-ios.log
           echo "===== 重建完成，检查产物 ====="
           find . -type d -name "iPhone" 2>/dev/null || true
-          ls -la ndll/ 2>/dev/null || true
+          ls -la lime-src/ndll/ 2>/dev/null || true
 
       - name: Compile
         run: |
@@ -108,7 +131,9 @@ jobs:
         uses: actions/upload-artifact@main
         with:
           name: build-log-${{ inputs.name }}
-          path: build-output.log
+          path: |
+            build-output.log
+            rebuild-ios.log
           if-no-files-found: warn
 
       - name: Make IPA
