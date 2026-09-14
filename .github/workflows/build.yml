@@ -80,6 +80,23 @@ jobs:
           haxelib run lime config JAVA_HOME $JAVA_HOME_17_arm64
           haxelib run lime config ANDROID_SETUP true
 
+      # --- PE0.6.3 内核缺少部分后续版本才加入的移动端类型，
+      # --- 这些类型只在 mobile 编译时才被引用，因此桌面构建从未暴露。
+      # --- 这里在构建前做最小化补丁，避免改动仓库源码。
+      - name: Patch mobile-only types for PE0.6.3
+        if: inputs.exportPath == 'ios' || inputs.exportPath == 'android'
+        run: |
+          set -e
+          echo "===== 补丁 1: TouchZone（PE0.6.3 的 source/mobile/objects 下无此类）====="
+          FILE1="source/mikolka/vslice/charSelect/CharSelectSubState.hx"
+          if [ -f "$FILE1" ]; then
+            sed -i '' 's/var touchKeys:Array<TouchZone>;/var touchKeys:Array<Dynamic>;/' "$FILE1"
+            echo "--- 补丁后（应显示 Array<Dynamic>）---"
+            grep -n "touchKeys" "$FILE1" || echo "（未找到 touchKeys）"
+          else
+            echo "文件不存在: $FILE1"
+          fi
+
       # --- iOS 专用：lime-pslice 通过 haxelib git 安装时不会拉取 git submodule，
       # --- 导致 lib/hashlink/src/hl.h 缺失（fatal error: 'hl.h' file not found）。
       # --- 参照官方 ios.yml：clone 源码 + haxelib dev 指向它，让 submodule 就位。
@@ -103,9 +120,6 @@ jobs:
 
           echo "===== 检查关键头文件 hl.h ====="
           find lime-src -name "hl.h" -print 2>/dev/null || echo "未找到 hl.h"
-          echo "===== 检查 lib 目录 ====="
-          ls -la lime-src/lib/ 2>/dev/null || echo "lime-src/lib 不存在"
-          ls -la lime-src/project/lib/ 2>/dev/null || echo "lime-src/project/lib 不存在"
 
           echo "===== 把 lime 指向源码目录 ====="
           haxelib dev lime "$PWD/lime-src"
@@ -118,11 +132,15 @@ jobs:
           haxelib run lime rebuild ios -release -nocolor -nocffi 2>&1 | tee rebuild-ios.log
           echo "===== 重建完成，检查产物 ====="
           find . -type d -name "iPhone" 2>/dev/null || true
-          ls -la lime-src/ndll/ 2>/dev/null || true
 
       - name: Compile
         run: |
           set -o pipefail
+          # 确保 lime 指向带 submodule 的源码目录（iOS）
+          if [ "${{ inputs.exportPath }}" = "ios" ] && [ -d lime-src ]; then
+            haxelib dev lime "$PWD/lime-src" || true
+            haxelib path lime || true
+          fi
           haxelib run lime build ${{ inputs.buildArgs }} 2>&1 | tee build-output.log
 
       # 无论成功失败，都把完整日志存成 artifact，方便排查
