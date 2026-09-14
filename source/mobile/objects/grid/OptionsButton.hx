@@ -36,11 +36,13 @@ class OptionsButton extends GridTile
 		{
 			HapticUtil.vibrate(0, 0.01, 0.2);
 		}, 4);
-		animation.onFinish.addOnce(function(name:String)
+
+		// 兼容 flixel 5.2.2（无 animation.onFinish，使用 finishCallback）
+		animation.finishCallback = function(name:String)
 		{
 			if (name != 'confirm')
 				return;
 			callback();
-		});
+		};
 	}
 }
