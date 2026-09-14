@@ -80,26 +80,45 @@ jobs:
           haxelib run lime config JAVA_HOME $JAVA_HOME_17_arm64
           haxelib run lime config ANDROID_SETUP true
 
-      # --- PE0.6.3 内核缺少部分后续版本才加入的移动端类型，
+      # --- 一次性扫描：列出所有引用了 PE0.6.3 缺失类型的位置 ---
+      - name: Scan for missing mobile types
+        if: inputs.exportPath == 'ios' || inputs.exportPath == 'android'
+        run: |
+          echo "===== 扫描 PE0.6.3 缺失类型的引用 ====="
+          for TYPE in TouchZone GridButtons ScrollableObject GridTile GridTileDonate OptionsButton ScreenUtil MobileMenuState; do
+            echo ""
+            echo "### $TYPE ###"
+            grep -rn --include="*.hx" "$TYPE" source/ 2>/dev/null || echo "  (no refs)"
+          done
+          echo ""
+          echo "===== 扫描完成 ====="
+
+      # --- PE0.6.3 内核缺少部分后继版本才加入的移动端类型，
       # --- 这些类型只在 mobile 编译时才被引用，因此桌面构建从未暴露。
       # --- 这里在构建前做最小化补丁，避免改动仓库源码。
       - name: Patch mobile-only types for PE0.6.3
         if: inputs.exportPath == 'ios' || inputs.exportPath == 'android'
         run: |
           set -e
-          echo "===== 补丁 1: TouchZone（PE0.6.3 的 source/mobile/objects 下无此类）====="
+          echo "===== 补丁 1: TouchZone（PE0.6.3 无此类）====="
           FILE1="source/mikolka/vslice/charSelect/CharSelectSubState.hx"
           if [ -f "$FILE1" ]; then
             sed -i '' 's/var touchKeys:Array<TouchZone>;/var touchKeys:Array<Dynamic>;/' "$FILE1"
-            echo "--- 补丁后（应显示 Array<Dynamic>）---"
-            grep -n "touchKeys" "$FILE1" || echo "（未找到 touchKeys）"
-          else
-            echo "文件不存在: $FILE1"
+            grep -n "touchKeys" "$FILE1" || echo "(touchKeys not found)"
           fi
 
+          echo "===== 补丁 2: ScreenUtil（PE0.6.3 无此类）====="
+          FILE2="source/mikolka/funkin/custom/mobile/MobileScaleMode.hx"
+          if [ -f "$FILE2" ]; then
+            # 将 updateDeviceNotch(mobile.backend.ScreenUtil.getNotchRect()) 改为传空矩形
+            sed -i '' 's/updateDeviceNotch(mobile\.backend\.ScreenUtil\.getNotchRect());/updateDeviceNotch(new lime.math.Rectangle(0, 0, 0, 0));/' "$FILE2"
+            grep -n "updateDeviceNotch" "$FILE2" || echo "(updateDeviceNotch not found)"
+          fi
+
+          echo "===== 补丁完成 ====="
+
       # --- iOS 专用：lime-pslice 通过 haxelib git 安装时不会拉取 git submodule，
-      # --- 导致 lib/hashlink/src/hl.h 缺失（fatal error: 'hl.h' file not found）。
-      # --- 参照官方 ios.yml：clone 源码 + haxelib dev 指向它，让 submodule 就位。
+      # --- 导致 lib/hashlink/src/hl.h 缺失。参照官方 ios.yml：clone 源码 + haxelib dev。
       - name: Prepare Lime source with submodules (iOS)
         if: inputs.exportPath == 'ios'
         run: |
