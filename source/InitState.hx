@@ -26,7 +26,17 @@ class InitState extends MusicBeatState
 		FlxG.mouse.visible = false;
 
 		FlxG.game.focusLostFramerate = 60;
-		FlxG.mouse.load(Assets.getBitmapData(Paths.getPreloadPath("images/cursor-default.png")).clone());
+		// iOS 加固：这张预载图若取不到（资产未预载/路径不符），原来直接 .clone() 会在
+		// 启动第一帧就空指针 -> 黑屏/闪退。这里判空 + try/catch 兜底。
+		try {
+			var __cursorBmd = Assets.getBitmapData(Paths.getPreloadPath("images/cursor-default.png"));
+			if (__cursorBmd != null)
+				FlxG.mouse.load(__cursorBmd.clone());
+			else
+				trace('InitState: cursor-default.png 未找到，跳过鼠标光标');
+		} catch (e:Dynamic) {
+			trace('InitState: 载入鼠标光标失败已忽略: ' + e);
+		}
 		FlxG.sound.muteKeys = muteKeys;
 		FlxG.sound.volumeDownKeys = volumeDownKeys;
 		FlxG.sound.volumeUpKeys = volumeUpKeys;
