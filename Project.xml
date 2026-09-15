@@ -58,7 +58,9 @@
 	<define name="discord_rpc" if="desktop" />
 	<define name="ACHIEVEMENTS_ALLOWED" />
 	<define name="VIDEOS_ALLOWED" if="desktop || mobile" unless="32bits"/>
-	<define name="COPYSTATE_ALLOWED" if="MODS_ALLOWED mobile"/>
+	<!-- iOS 不做首次资源复制：内嵌资源本来就内嵌可读，复制一份到 Documents 只会
+	     白占 500MB+ 空间、拖慢启动；corruption 等外部资源走 Documents/mods/ 兜底即可。 -->
+	<define name="COPYSTATE_ALLOWED" if="MODS_ALLOWED android"/>
 	<define name="TOUCH_CONTROLS_ALLOWED" if="mobile || web" />
 	<define name="TOUCH_HERE_TO_PLAY" if="TOUCH_CONTROLS_ALLOWED"/>
 
