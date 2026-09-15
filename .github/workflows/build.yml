@@ -173,13 +173,31 @@ jobs:
             rebuild-ios.log
           if-no-files-found: warn
 
+      # --- iOS 文件共享：不开这个，iPad 上「文件」App 看不到游戏的 Documents，
+      # --- 既没法部署 mods/ 资源，也拿不到崩溃日志。老移植已验证有效。
+      - name: Patch iOS Info.plist (file sharing)
+        if: inputs.name == 'iOS'
+        run: |
+          set -e
+          APP_DIR=$(ls -d export/PE0.6.3/release/ios/build/Release-iphoneos/*.app | head -1)
+          PLIST="$APP_DIR/Info.plist"
+          echo "===== Info.plist: $PLIST ====="
+          /usr/libexec/PlistBuddy -c "Add :UIFileSharingEnabled bool true" "$PLIST" || /usr/libexec/PlistBuddy -c "Set :UIFileSharingEnabled true" "$PLIST"
+          /usr/libexec/PlistBuddy -c "Add :LSSupportsOpeningDocumentsInPlace bool true" "$PLIST" || /usr/libexec/PlistBuddy -c "Set :LSSupportsOpeningDocumentsInPlace true" "$PLIST"
+          echo "--- 校验 ---"
+          /usr/libexec/PlistBuddy -c "Print :UIFileSharingEnabled" "$PLIST"
+          /usr/libexec/PlistBuddy -c "Print :LSSupportsOpeningDocumentsInPlace" "$PLIST"
+
       - name: Make IPA
         if: inputs.name == 'iOS'
         run: |
           cd export/PE0.6.3/release/ios/build/Release-iphoneos
+          SHORT_SHA=$(echo "$GITHUB_SHA" | cut -c1-8)
           mkdir Payload
           mv *.app Payload
-          zip -r ${{ env.PROJECT_NAME }}.ipa Payload
+          zip -r "${{env.PROJECT_NAME }}-${SHORT_SHA}-run${{ github.run_id }}.ipa" Payload
+          echo "===== 产物 ====="
+          ls -lh *.ipa
 
       - name: Upload Artifact
         uses: actions/upload-artifact@main
