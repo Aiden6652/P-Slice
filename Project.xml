@@ -235,8 +235,10 @@
 		并把 iconOG.png 复制进去，然后把下面的值改为 art/mobile/PSlice.appiconset
 	-->
 	<section if="mobile">
-		<config type="ios" pslice-icon-dir="art" />
-		<icon path="art/iconOG.png" />
+		<config type="android" pslice-mono-icon="art/mobile/iconMono.png" />
+		<config type="ios" pslice-icon-dir="art/mobile/PSlice.appiconset" />
+		<icon path="art/mobile/iconAdaptive.png" if="android" />
+		<icon path="art/mobile/iconMobile.png" unless="android" />
 	</section>
 
 	<!-- Desktop icons (unchanged) -->
