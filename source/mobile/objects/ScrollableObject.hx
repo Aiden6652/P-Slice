@@ -89,8 +89,8 @@ class ScrollableObject extends TouchZone {
     private function getDeltaY():Float {
         #if mobile
         if(FlxG.touches.getFirst() == null) return 0;
-        var delta = FlxG.touches.getFirst().viewY - lastYPos;
-        lastYPos = FlxG.touches.getFirst().viewY;
+        var delta = FlxG.touches.getFirst().screenY - lastYPos;
+        lastYPos = FlxG.touches.getFirst().screenY;
         return delta;
         #else
         return FlxG.mouse.deltaViewY;
