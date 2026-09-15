@@ -13,7 +13,11 @@
 	<!--The flixel preloader is not accurate in Chrome. You can use it regularly if you embed the swf into a html file
 		or you can set the actual size of your file manually at "FlxPreloaderBase-onUpdate-bytesTotal"-->
 	<!-- <app preloader="Preloader" resizable="true" /> -->
-	<app preloader="mikolka.vslice.FunkinPreloader" />
+	<!-- iOS 黑屏排查：暂时换用 flixel 原生预载器。
+	     原自定义 FunkinPreloader 会在启动时创建全屏 Bitmap + 自定义 VFDOverlay 着色器，
+	     并额外等待一次 MouseEvent.CLICK 才继续；iOS 上任一环节失败就是黑屏卡住。
+	     老移植(pe-corruption-ios)可用的正是 flixel 原生预载器。 -->
+	<app preloader="flixel.system.FlxPreloader" />
 
 	<!--Minimum without FLX_NO_GAMEPAD: 11.8, without FLX_NO_NATIVE_CURSOR: 11.2-->
 	<set name="SWF_VERSION" value="11.8" />
@@ -75,7 +79,7 @@
 	
 
 	<!-- <define name="PRELOAD_ALL" /> -->
-	<define name="PRELOAD_ALL" unless="web" />
+	<define name="PRELOAD_ALL" if="desktop" />
 	<define name="NO_PRELOAD_ALL" unless="PRELOAD_ALL"/>
 	
 	<library name="videos"        preload="true" />
