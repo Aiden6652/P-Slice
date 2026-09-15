@@ -154,6 +154,11 @@ class CoolUtil
 	{
 		#if android
 		AndroidTools.showAlertDialog(title, message, {name: "OK", func: null}, null);
+		#elseif ios
+		// iOS 上 lime 的 window.alert 弹的是原生 UIAlertController，它不接受 flixel 的触摸输入：
+		// 弹出来之后用户点不到 OK，整个游戏就卡死在那一屏（CopyState 首次启动必然踩到）。
+		// 改为只写日志，不弹阻塞性原生框。
+		trace('[POPUP] ' + title + ' :: ' + message);
 		#else
 		FlxG.stage.window.alert(message, title);
 		#end
