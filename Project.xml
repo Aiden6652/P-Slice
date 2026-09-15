@@ -63,7 +63,9 @@
 	<define name="TOUCH_HERE_TO_PLAY" if="TOUCH_CONTROLS_ALLOWED"/>
 
 	<define name="TITLE_SCREEN_EASTER_EGG" if="officialBuild"/> <!-- DELETE THE if="officialBuild" for enabling this on an unofficial build -->
-	<define name="CHECK_FOR_UPDATES" />
+	<!-- iOS 上关掉启动联网检查：raw.githubusercontent.com 在国内不可达，
+	     请求会长时间挂起，且版本号与上游 pe-0.6.3 必然不同。 -->
+	<define name="CHECK_FOR_UPDATES" if="desktop" />
 	
 	<define name="CRASH_HANDLER" if="desktop || mobile" unless="debug" />
 
